@@ -24,6 +24,7 @@ args@{
   lib,
   workspaceSrc,
   ignoreLockHash,
+  cfgFlags ? [],
 }:
 let
   nixifiedLockHash = "{{ cargo_lock_hash }}";
@@ -44,7 +45,11 @@ else let
   rootFeatures' = expandFeatures rootFeatures;
   overridableMkRustCrate = f:
     let
-      drvs = genDrvsByProfile profilesByName ({ profile, profileName }: mkRustCrate ({ inherit release profile hostPlatformCpu hostPlatformFeatures target profileOpts codegenOpts cargoUnstableFlags rustcLinkFlags rustcBuildFlags; } // (f profileName)));
+      drvs = genDrvsByProfile profilesByName ({ profile, profileName }: mkRustCrate ({
+          inherit release profile hostPlatformCpu hostPlatformFeatures target profileOpts codegenOpts cargoUnstableFlags;
+	  rustcLinkFlags = (builtins.map (f: "--cfg ${f}") cfgFlags) ++ rustcLinkFlags;
+	  rustcBuildFlags = (builtins.map (f: "--cfg ${f}") cfgFlags) ++ rustcBuildFlags;
+      } // (f profileName)));
     in { compileMode ? null, profileName ? decideProfile compileMode release }:
       let drv = drvs.${profileName}; in if compileMode == null then drv else drv.override { inherit compileMode; };
 in

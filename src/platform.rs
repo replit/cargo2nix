@@ -36,7 +36,7 @@ fn cfg_to_expr(cfg: &CfgExpr, platform_var: &str) -> BoolExpr {
         CfgExpr::Value(Cfg::Name(n)) => match n.as_str() {
             "windows" => Single(format!("{}.isWindows", platform_var)),
             "unix" => Single(format!("{}.isUnix", platform_var)),
-            _ => False,
+            _ => Single(format!("builtins.elem {n:?} cfgFlags")),
         },
         CfgExpr::Value(Cfg::KeyPair(k, v)) => match (k.as_str(), v.as_str()) {
             ("target_arch", v) => target_arch_to_nix(platform_var, v),
